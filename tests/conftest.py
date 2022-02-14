@@ -3,24 +3,75 @@ import random
 import sqlite3
 import pytest
 import pathlib
+import tempfile
+import logging
 
-from wargaming import create_db_instructions
+logging.basicConfig(level=logging.INFO)
 
+from wargaming import create_db_instructions, DB_FILEPATH
+
+# DB_TEST_FILEPATH = tempfile.gettempdir() + r"\test_db.db"
+# print('DB_TEST_FILEPATH = ', DB_TEST_FILEPATH)
 
 # def create_test_db(tmp_path_factory):
 #     img = compute_expensive_image()
 #     fn = tmp_path_factory.mktemp("data") / "img.png"
 
 
-def create_test_db(tmpdir_factory: pytest.TempdirFactory) -> sqlite3.Connection:
+# @pytest.fixture(scope='session')
+
+
+FOLDER_FOR_TESTS = r'D:\folder_to_tests'
+
+
+def manifest_temp_db(tmpdir_factory: pytest.TempdirFactory) -> str:
+    db_dir = tmpdir_factory.mktemp("data")
+    db_fn = db_dir.join("test_db.db")
+    db_filepath = os.path.join(db_fn.dirname, db_fn.basename)
+    # print('\n!!! manifest_temp_db: ', db_filepath)
+    return db_filepath
+
+
+@pytest.fixture(scope='session', autouse=True)
+def create_test_db():
+
+    folder_name = 'python_test_data'
+    # folder_path = os.path.join(tempfile.gettempdir(), folder_name)
+    folder_path = os.path.join(FOLDER_FOR_TESTS, folder_name)
+    if not os.path.isdir(folder_path):
+        os.mkdir(folder_path)
+        logging.info(f'\nfolder {folder_path} - created')
+    file_name = "test_db.db"
+    file_path = os.path.join(folder_path, file_name)
+
+    # text_file = open(file_path, "a")
+    # logging.info('func create_test_db - started')
     # test_db_filepath = tmpdir_factory.getbasetemp().join('test_db.db')
-    test_db_filepath = tmpdir_factory.getbasetemp().join('test_db.db')
-    print('\ntest_db_filepath', test_db_filepath)
-    test_db = sqlite3.connect(test_db_filepath)
-    curs = test_db.cursor()
-    for s in create_db_instructions:
-        curs.execute(s)
-    return test_db
+    # print('\n!!! create_test_db', manifest_temp_db)
+    file = open(file_path, 'w')
+    test_db = sqlite3.connect(file_path)
+    # test_db = sqlite3.connect(DB_TEST_FILEPATH)
+    cur = test_db.cursor()
+    with test_db:
+        for s in create_db_instructions:
+            cur.execute(s)
+    # cur.close()
+    cur.close()
+    test_db.close()
+
+    yield
+
+    # text_file.close()
+
+    file.close()
+
+    # if os.path.isdir(folder_path):
+    #     if os.path.isfile(file_path):
+    #         os.remove(file_path)
+    #         logging.info(f'\nfile {file_path} - removed')
+    #     os.rmdir(folder_path)
+    #     logging.info(f'\nfolder {folder_path} - removed')
+
 
 
 def paste_rows_into_test_db_with_correction_of_one_parameter(
@@ -72,13 +123,16 @@ def paste_ships_into_test_db_with_correction_of_one_parameter(
     curs_o.close()
 
 
-@pytest.fixture(scope='session', autouse=True)
-def create_and_fill_test_db(tmpdir_factory: pytest.TempdirFactory):
+# @pytest.fixture(scope='session', autouse=False)
+def create_and_fill_test_db(tmpdir_factory):
 
-    conn_origin_db = sqlite3.connect('E:/Documents/Python3/2021/Junior_QA_Automation_wargaming_test/wargaming.db')
+    conn_origin_db = sqlite3.connect(DB_FILEPATH)
+    print('\n   DB_FILEPATH: ', DB_FILEPATH)
     # https://habr.com/ru/post/448792/
 
-    conn_test_db = create_test_db(tmpdir_factory)
+    test_db = manifest_temp_db(tmpdir_factory)
+    print('\n   TEST_DB_FILEPATH: ', test_db)
+    conn_test_db = create_test_db(test_db)
 
     paste_ships_into_test_db_with_correction_of_one_parameter(conn_origin_db, conn_test_db)
 
@@ -88,7 +142,8 @@ def create_and_fill_test_db(tmpdir_factory: pytest.TempdirFactory):
     conn_origin_db.close()
     conn_test_db.close()
 
-    yield
+    # return test_db
+    yield test_db
 
 
 # @pytest.fixture(scope='session', autouse=False)
@@ -117,3 +172,44 @@ def create_and_fill_test_db(tmpdir_factory: pytest.TempdirFactory):
 # @pytest.fixture(params=get_ship_pairs)
 # def get_ship_pair(request):
 #     return request.param
+
+# folder_name = 'python_test_data'
+#
+# folder_path = os.path.join(tempfile.gettempdir(), folder_name)
+# if not os.path.isdir(folder_path):
+#     os.mkdir(folder_path)
+#     print(folder_path)
+#     print('done')
+#
+# file_name = "test_db.db"
+# file_path = os.path.join(folder_path, file_name)
+#
+# text_file = open(file_path, "a")
+# text_file.close()
+#
+# if os.path.isdir(folder_path):
+#     if os.path.isfile(file_path):
+#         os.remove(file_path)
+#         print('double done')
+#     os.rmdir(folder_path)
+#     print('double done')
+
+# if not os.path.isdir("folder111"):
+#     os.mkdir("folder111")
+#     print(a)
+#
+# db_filepath = os.path.join(tempfile.gettempdir(), 'test_data', 'test_db.db')
+# print(db_filepath)
+#
+# os.remove()
+# os.rmdir("folder")
+
+
+# text_file = open("test_db.db", "a")
+# print(tempfile.gettempdir())
+# f = tempfile.TemporaryFile()
+# f.close()
+# # fp  = tempfile.mkstemp()
+# print(f.name)
+# f.close()
+# print(f)

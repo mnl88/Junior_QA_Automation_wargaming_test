@@ -1,59 +1,5 @@
 # https://docs.python.org/3/library/sqlite3.html
 
-"""
-
-3. Создать session-scope фикстуру, которая получает текущее состояние базы данных и создает временную новую базу, в которой рандомизируются значения:
-
-Для каждого корабля меняется на случайный один из компонентов: корпус, орудие или двигатель
-В каждом компоненте меняется один из случайно выбранных параметров на случайное значение из допустимого диапазона (см. выше)
-
-
-4. Написать автотесты, сравнивающие данные из исходной базы с полученной рандомизированной:
-
-Для каждого корабля должно быть 3 теста, проверяющие его орудие, корпус и двигатель.
-Тест должен падать с assert:
-i. Когда значение параметра компонента не соответствует тому, что было до запуска рандомизатора.
-
-Пример вывода:
-
-Ship-2, weapon-1
-
-     reload speed: expected 1, was 2
-
-     diameter: expected 2, was 3
-
-Ship-2, hull-3
-
-     type: expected 1, was 2
-
-Ship-3, engine-6
-
-     power: expected 22, was 13
-
-ii. Когда изменилось орудие, корпус или двигатель. Выводить, что было до этого и, что сейчас.
-
-Пример вывода:
-
-Ship-5, engine-4
-
-     expected engine-1, was engine-4
-
-
-
-Требования к выполненному заданию:
-
-Версия Python – 3.8
-Тесты должны быть написаны с использованием фрейморка pytest
-В качестве параметризации использовать pytest.mark.parametrize или хук pytest_generate_tests.
-В результате прогона должно получиться 600 тестов.
-В результате выполнения задания должно быть по крайней мере следующее:
-Скрипт, создающий и заполняющий исходную базу данных
-Python-модуль, содержащий тесты
-(Опционально) conftest.py, содержащий фикстуры и хукиъ
-6. Стиль кода – PEP8
-"""
-
-import pathlib
 import random
 import sqlite3
 import os
@@ -88,9 +34,10 @@ hulls_count = 5
 engines_count = 6
 range_values = (1, 20)
 
-db_filepath = os.path.realpath(os.path.dirname(__file__)) + '/wargaming.db'
+DB_FILEPATH = os.path.realpath(os.path.dirname(__file__)) + '/wargaming.db'
+# DB_FILEPATH = 'E:/Documents/Python3/2021/Junior_QA_Automation_wargaming_test/wargaming.db'
 
-con = sqlite3.connect(db_filepath)
+con = sqlite3.connect(DB_FILEPATH)
 con.row_factory = sqlite3.Row
 cur = con.cursor()
 
@@ -100,7 +47,6 @@ def make_db(create_db_statements: list[str]):
         cur.execute(s)
 
 
-#  todo: delete before share
 def drop_all_tables():
     cur.execute("""DROP TABLE Ships""")
     cur.execute("""DROP TABLE Weapons""")
@@ -169,22 +115,6 @@ def main():
     drop_all_tables()
     make_db(create_db_instructions)  # 1st task
     fill_db(ships_count, weapons_count, hulls_count, engines_count, range_values)  # 2nd task
-
-    # table_name = 'ships'
-    # a = cur.execute(f"PRAGMA table_info([{table_name}]);").fetchone()
-    # pk_name = a['name']
-    # rows = cur.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
-    # tables = [row[0] for row in rows]
-    #
-    # def sql_identifier(s):
-    #     return '"' + s.replace('"', '""') + '"'
-    #
-    # for table in tables:
-    #     print("table: " + table)
-    #     rows = cur.execute("PRAGMA table_info({})".format(sql_identifier(table)))
-    #     print(rows.fetchall())
-    #     rows = cur.execute("PRAGMA foreign_key_list({})".format(sql_identifier(table)))
-    #     print(rows.fetchall())
 
 
 if __name__ == '__main__':
